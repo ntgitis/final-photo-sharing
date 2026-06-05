@@ -1,0 +1,69 @@
+/* styles.css */
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 24px;
+}
+
+.auth-paper {
+  padding: 32px;
+  width: 100%;
+  border-radius: 8px;
+  /* Hiệu ứng chuyển động mượt mà khi đổi form */
+  transition: max-width 0.4s ease-in-out;
+}
+
+.auth-paper.login-mode {
+  max-width: 400px;
+}
+
+.auth-paper.register-mode {
+  max-width: 700px;
+}
+
+.auth-title-login {
+  font-weight: bold;
+  color: #1976d2;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.auth-title-register {
+  font-weight: bold;
+  color: #1976d2;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.auth-submit-btn {
+  margin-top: 24px !important;
+  margin-bottom: 16px !important;
+  padding: 12px !important;
+  font-size: 1.1rem !important;
+}
+
+.auth-toggle-text {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.auth-message {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.auth-toggle-link {
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  color: #1976d2;
+  transition: color 0.2s;
+}
+
+.auth-toggle-link:hover {
+  text-decoration: underline;
+  color: #115293;
+}
