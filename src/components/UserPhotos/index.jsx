@@ -12,7 +12,6 @@ import {
 
 import { useParams, Link, useNavigate } from "react-router-dom";
 
-import "./styles.css";
 import fetchModel, { BASE_URL } from "../../lib/fetchModelData";
 
 function UserPhotos({

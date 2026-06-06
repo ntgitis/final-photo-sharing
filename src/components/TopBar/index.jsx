@@ -48,7 +48,7 @@ function TopBar({
   };
 
   return (
-    <AppBar className="topbar-appBar" position="absolute">
+    <AppBar position="absolute">
       <Toolbar style={{ display: "flex", justifyContent: "space-between" }}>
         <Typography variant="h6" color="inherit">
           {currentUser ? `Hi, ${currentUser.first_name}` : "Please Login"}
@@ -86,24 +86,11 @@ function TopBar({
                 onChange={handlePhotoUpload}
               />
               <label htmlFor="photo-upload-input">
-                <Button
-                  component="span"
-                  variant="contained"
-                  color="success"
-                  sx={{ mr: 2, fontWeight: "bold" }}
-                >
+                <Button component="span" color="inherit">
                   Add Photo
                 </Button>
               </label>
-              <Button
-                color="inherit"
-                onClick={onLogout}
-                sx={{
-                  fontWeight: "bold",
-                  border: "1px solid white",
-                  borderRadius: 1,
-                }}
-              >
+              <Button color="inherit" onClick={onLogout}>
                 Logout
               </Button>
             </>

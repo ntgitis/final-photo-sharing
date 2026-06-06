@@ -1,95 +1,142 @@
 import React, { useState } from "react";
-import { TextField, Button, Typography, Grid, Paper, Box } from "@mui/material";
+import { Box, Button, Paper, TextField, Typography } from "@mui/material";
+
 import fetchModel from "../../lib/fetchModelData";
 import "./styles.css";
+
+const emptyRegisterData = {
+  login_name: "",
+  password: "",
+  rePassword: "",
+  first_name: "",
+  last_name: "",
+  location: "",
+  description: "",
+  occupation: "",
+};
+
+function getErrorMessage(error, fallbackMessage) {
+  const data = error.response?.data;
+
+  if (typeof data === "string") {
+    return data;
+  }
+
+  return data?.message || fallbackMessage;
+}
 
 function LoginRegister({ onLoginSuccess }) {
   const [isLoginView, setIsLoginView] = useState(true);
 
-  // State Đăng nhập
   const [loginName, setLoginName] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  // State Đăng ký
-  const [regData, setRegData] = useState({
-    login_name: "",
-    password: "",
-    rePassword: "",
-    first_name: "",
-    last_name: "",
-    location: "",
-    description: "",
-    occupation: "",
+  const [regData, setRegData] = useState(emptyRegisterData);
+  const [regMessage, setRegMessage] = useState({
+    text: "",
+    isError: false,
   });
-  const [regMessage, setRegMessage] = useState({ text: "", isError: false });
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const switchView = (showLogin) => {
+    setIsLoginView(showLogin);
     setLoginError("");
+    setRegMessage({
+      text: "",
+      isError: false,
+    });
+  };
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    setLoginError("");
+
+    if (!loginName.trim() || !loginPassword) {
+      setLoginError("Please enter your username and password.");
+      return;
+    }
+
     try {
-      const res = await fetchModel("/admin/login", {
+      const response = await fetchModel("/admin/login", {
         method: "POST",
-        data: { login_name: loginName, password: loginPassword },
+        data: {
+          login_name: loginName.trim(),
+          password: loginPassword,
+        },
       });
-      onLoginSuccess(res.data);
-    } catch (err) {
-      setLoginError(
-        err.response?.data || "Đăng nhập thất bại. Vui lòng thử lại."
-      );
+
+      onLoginSuccess(response.data);
+    } catch (error) {
+      setLoginError(getErrorMessage(error, "Login failed. Please try again."));
     }
   };
 
-  //nhập dữ liệu register
-  const handleRegChange = (e) => {
-    setRegData({ ...regData, [e.target.name]: e.target.value });
-  };
-  //kiểm tra dữ liệu register
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setRegMessage({ text: "", isError: false });
+  const handleRegChange = (event) => {
+    const { name, value } = event.target;
 
-    if (
-      !regData.login_name ||
-      !regData.password ||
-      !regData.first_name ||
-      !regData.last_name
-    ) {
+    setRegData((currentData) => ({
+      ...currentData,
+      [name]: value,
+    }));
+  };
+
+  const handleRegister = async (event) => {
+    event.preventDefault();
+
+    setRegMessage({
+      text: "",
+      isError: false,
+    });
+
+    const requiredFields = [
+      regData.login_name,
+      regData.password,
+      regData.rePassword,
+      regData.first_name,
+      regData.last_name,
+    ];
+
+    if (requiredFields.some((value) => !value.trim())) {
       setRegMessage({
-        text: "Vui lòng điền đầy đủ thông tin bắt buộc!",
+        text: "Please fill in all required fields.",
         isError: true,
       });
       return;
     }
+
     if (regData.password !== regData.rePassword) {
       setRegMessage({
-        text: "Mật khẩu nhập lại không trùng khớp!",
+        text: "Passwords do not match.",
         isError: true,
       });
       return;
     }
 
+    const registerPayload = {
+      login_name: regData.login_name.trim(),
+      password: regData.password,
+      first_name: regData.first_name.trim(),
+      last_name: regData.last_name.trim(),
+      location: regData.location.trim(),
+      description: regData.description.trim(),
+      occupation: regData.occupation.trim(),
+    };
+
     try {
-      await fetchModel("/user", { method: "POST", data: regData });
-      //thông báo thành công
+      await fetchModel("/user", {
+        method: "POST",
+        data: registerPayload,
+      });
+
       setRegMessage({
-        text: "Đăng ký thành công! Hãy chuyển sang Đăng nhập.",
+        text: "Registration successful.",
         isError: false,
       });
-      //xóa dữ liệu trong form
-      setRegData({
-        login_name: "",
-        password: "",
-        rePassword: "",
-        first_name: "",
-        last_name: "",
-        location: "",
-        description: "",
-        occupation: "",
-      });
-    } catch (err) {
+
+      setRegData(emptyRegisterData);
+    } catch (error) {
       setRegMessage({
-        text: err.response?.data || "Đăng ký thất bại.",
+        text: getErrorMessage(error, "Registration failed. Please try again."),
         isError: true,
       });
     }
@@ -97,186 +144,151 @@ function LoginRegister({ onLoginSuccess }) {
 
   return (
     <Box className="auth-container">
-      <Paper
-        elevation={4}
-        className={`auth-paper ${isLoginView ? "login-mode" : "register-mode"}`}
-      >
+      <Paper className="auth-paper" elevation={1}>
         {isLoginView ? (
           <>
-            <Typography variant="h4" className="auth-title-login">
-              Đăng Nhập
+            <Typography variant="h5" className="auth-title">
+              Login
             </Typography>
-            <form onSubmit={handleLogin}>
+
+            <form className="auth-form" onSubmit={handleLogin}>
               <TextField
-                label="Tên đăng nhập"
-                fullWidth
-                margin="normal"
-                required
+                placeholder="Username"
                 value={loginName}
-                onChange={(e) => setLoginName(e.target.value)}
-              />
-              <TextField
-                label="Mật khẩu"
-                type="password"
+                onChange={(event) => setLoginName(event.target.value)}
+                autoComplete="username"
                 fullWidth
-                margin="normal"
                 required
+              />
+
+              <TextField
+                placeholder="Password"
+                type="password"
                 value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
+                onChange={(event) => setLoginPassword(event.target.value)}
+                autoComplete="current-password"
+                fullWidth
+                required
               />
 
               {loginError && (
-                <Typography
-                  color="error"
-                  variant="body2"
-                  className="auth-message"
-                >
+                <Typography color="error" variant="body2">
                   {loginError}
                 </Typography>
               )}
 
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                className="auth-submit-btn"
-              >
-                LOGIN
+              <Button type="submit" variant="contained" fullWidth>
+                Login
               </Button>
             </form>
 
-            <Typography className="auth-toggle-text" variant="body2">
-              Bạn chưa có tài khoản?{" "}
-              <a
-                className="auth-toggle-link"
-                onClick={() => setIsLoginView(false)}
-              >
-                Đăng ký ngay
-              </a>
-            </Typography>
+            <Button
+              className="auth-switch-button"
+              onClick={() => switchView(false)}
+            >
+              Create account
+            </Button>
           </>
         ) : (
           <>
-            <Typography variant="h4" className="auth-title-register">
-              Tạo Tài Khoản Mới
+            <Typography variant="h5" className="auth-title">
+              Register
             </Typography>
-            <br />
-            <form onSubmit={handleRegister}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Tên đăng nhập"
-                    name="login_name"
-                    fullWidth
-                    required
-                    value={regData.login_name}
-                    onChange={handleRegChange}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Nghề nghiệp"
-                    name="occupation"
-                    fullWidth
-                    value={regData.occupation}
-                    onChange={handleRegChange}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Mật khẩu"
-                    type="password"
-                    name="password"
-                    fullWidth
-                    required
-                    value={regData.password}
-                    onChange={handleRegChange}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Nhập lại mật khẩu"
-                    type="password"
-                    name="rePassword"
-                    fullWidth
-                    required
-                    value={regData.rePassword}
-                    onChange={handleRegChange}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Tên"
-                    name="first_name"
-                    fullWidth
-                    required
-                    value={regData.first_name}
-                    onChange={handleRegChange}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Họ"
-                    name="last_name"
-                    fullWidth
-                    required
-                    value={regData.last_name}
-                    onChange={handleRegChange}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Địa chỉ"
-                    name="location"
-                    fullWidth
-                    value={regData.location}
-                    onChange={handleRegChange}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Mô tả bản thân"
-                    name="description"
-                    multiline
-                    rows={2}
-                    fullWidth
-                    value={regData.description}
-                    onChange={handleRegChange}
-                  />
-                </Grid>
-              </Grid>
+
+            <form className="auth-form" onSubmit={handleRegister}>
+              <TextField
+                placeholder="Username"
+                name="login_name"
+                value={regData.login_name}
+                onChange={handleRegChange}
+                fullWidth
+                required
+              />
+
+              <TextField
+                placeholder="Password"
+                type="password"
+                name="password"
+                value={regData.password}
+                onChange={handleRegChange}
+                fullWidth
+                required
+              />
+
+              <TextField
+                placeholder="Confirm password"
+                type="password"
+                name="rePassword"
+                value={regData.rePassword}
+                onChange={handleRegChange}
+                fullWidth
+                required
+              />
+
+              <TextField
+                placeholder="First name"
+                name="first_name"
+                value={regData.first_name}
+                onChange={handleRegChange}
+                fullWidth
+                required
+              />
+
+              <TextField
+                placeholder="Last name"
+                name="last_name"
+                value={regData.last_name}
+                onChange={handleRegChange}
+                fullWidth
+                required
+              />
+
+              <TextField
+                placeholder="Location"
+                name="location"
+                value={regData.location}
+                onChange={handleRegChange}
+                fullWidth
+              />
+
+              <TextField
+                placeholder="Occupation"
+                name="occupation"
+                value={regData.occupation}
+                onChange={handleRegChange}
+                fullWidth
+              />
+
+              <TextField
+                placeholder="Description"
+                name="description"
+                value={regData.description}
+                onChange={handleRegChange}
+                multiline
+                rows={2}
+                fullWidth
+              />
 
               {regMessage.text && (
                 <Typography
                   color={regMessage.isError ? "error" : "success.main"}
                   variant="body2"
-                  className="auth-message"
                 >
                   {regMessage.text}
                 </Typography>
               )}
 
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                className="auth-submit-btn"
-              >
-                REGISTER
+              <Button type="submit" variant="contained" fullWidth>
+                Register
               </Button>
             </form>
 
-            <Typography className="auth-toggle-text" variant="body2">
-              Đã có tài khoản?{" "}
-              <a
-                className="auth-toggle-link"
-                onClick={() => setIsLoginView(true)}
-              >
-                Quay lại đăng nhập
-              </a>
-            </Typography>
+            <Button
+              className="auth-switch-button"
+              onClick={() => switchView(true)}
+            >
+              Back to login
+            </Button>
           </>
         )}
       </Paper>

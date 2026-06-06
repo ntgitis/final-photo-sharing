@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Typography, Card, CardContent, Button } from "@mui/material";
 import { Link, useParams } from "react-router-dom";
 
-import "./styles.css";
 import fetchModel from "../../lib/fetchModelData";
 
 /**
